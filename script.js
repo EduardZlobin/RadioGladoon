@@ -146,10 +146,10 @@
   }
 
   function updateUiForTrack(group, path) {
-    const modeLabel = group === "music" ? "MUSIC" : "INTERRUPTION";
+    const modeLabel = group === "music" ? "РАДИО" : "РАДИО";
     trackTitle.textContent = group === "music"
-      ? "Основной музыкальный эфир"
-      : "Служебная радиоперебивка";
+      ? "Музыкальный эфир радиостанции RADIO GLADOON"
+      : "Музыкальный эфир радиостанции RADIO GLADOON";
     trackSubtitle.textContent = group === "music"
       ? "случайная волна из музыкального потока"
       : "короткий сигнал между музыкальными сегментами";
