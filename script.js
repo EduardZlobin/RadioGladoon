@@ -8,6 +8,10 @@
   const meterBar = document.getElementById("meterBar");
   const corePulse = document.getElementById("corePulse");
   const canvas = document.getElementById("fogCanvas");
+  const startOverlay = document.getElementById("startOverlay");
+  const startButton = document.getElementById("startButton");
+  const volumeSlider = document.getElementById("volumeSlider");
+  const volumeValue = document.getElementById("volumeValue");
   const ctx = canvas.getContext("2d", { alpha: true });
 
   const SUPPORTED_EXTENSIONS = [
@@ -19,6 +23,7 @@
     lastPlayed: { music: null, interruptions: null },
     manifests: { music: [], interruptions: [] },
     started: false,
+    loading: false,
     audioReady: false,
     analyserReady: false,
     currentGroup: "music",
@@ -26,6 +31,7 @@
     audioLevel: 0,
     smoothedLevel: 0,
     bassPulse: 0,
+    hasBooted: false,
   };
 
   let audioContext = null;
@@ -33,7 +39,6 @@
   let sourceNode = null;
   let freqData = null;
   let timeData = null;
-  let autoplayUnlockAttached = false;
   let animationFrame = 0;
 
   function resizeCanvas() {
@@ -43,15 +48,6 @@
     canvas.style.width = `${window.innerWidth}px`;
     canvas.style.height = `${window.innerHeight}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  }
-
-  function cleanDisplayName(path) {
-    const filename = path.split("/").pop() || path;
-    return decodeURIComponent(filename)
-      .replace(/\.[^.]+$/, "")
-      .replace(/[_]+/g, " ")
-      .replace(/\s{2,}/g, " ")
-      .trim();
   }
 
   function isSupportedByExtension(path) {
@@ -138,13 +134,25 @@
     }
   }
 
+  function updateVolumeUi() {
+    const value = Number(volumeSlider.value || 0);
+    audio.volume = Math.max(0, Math.min(1, value / 100));
+    volumeValue.textContent = `${value}%`;
+    volumeSlider.style.background = `linear-gradient(90deg,
+      rgba(130,76,255,0.9) 0%,
+      rgba(44,114,255,0.92) ${value}%,
+      rgba(255,255,255,0.10) ${value}%,
+      rgba(255,255,255,0.10) 100%)`;
+  }
+
   function updateUiForTrack(group, path) {
-    const title = cleanDisplayName(path);
     const modeLabel = group === "music" ? "MUSIC" : "INTERRUPTION";
-    trackTitle.textContent = title || "Неизвестный трек";
+    trackTitle.textContent = group === "music"
+      ? "Основной музыкальный эфир"
+      : "Служебная радиоперебивка";
     trackSubtitle.textContent = group === "music"
-      ? "музыкальный сегмент эфира"
-      : "перебивка радиосигнала";
+      ? "случайная волна из музыкального потока"
+      : "короткий сигнал между музыкальными сегментами";
     modePill.textContent = `режим: ${modeLabel}`;
     state.currentGroup = group;
     state.currentTrackPath = path;
@@ -160,52 +168,12 @@
     audio.src = path;
     audio.preload = "auto";
 
-    try {
-      await ensureAudioContext();
-      await audio.play();
-      state.started = true;
-      autoplayPill.textContent = "autoplay: эфир активен";
-      hintText.textContent = "Эфир идёт бесконечно. Меняй файлы в music и interruptions — и плейлист обновится после перегенерации manifest.json.";
-      document.body.classList.add("is-playing");
-    } catch (error) {
-      autoplayPill.textContent = "autoplay: браузер заблокировал звук";
-      hintText.textContent = "Браузер включил режим вахтёра. Просто кликни, нажми клавишу или тапни один раз — радио стартует.";
-      attachUnlockHandlers();
-      throw error;
-    }
-  }
-
-  function attachUnlockHandlers() {
-    if (autoplayUnlockAttached) return;
-    autoplayUnlockAttached = true;
-
-    const unlock = async () => {
-      try {
-        await ensureAudioContext();
-        if (!state.started) {
-          await playNext();
-        } else {
-          await audio.play();
-        }
-        detachUnlockHandlers();
-      } catch {
-        // молча ждём следующее взаимодействие
-      }
-    };
-
-    state._unlockHandler = unlock;
-    ["pointerdown", "keydown", "touchstart"].forEach((eventName) => {
-      window.addEventListener(eventName, unlock, { passive: true });
-    });
-  }
-
-  function detachUnlockHandlers() {
-    if (!autoplayUnlockAttached || !state._unlockHandler) return;
-    ["pointerdown", "keydown", "touchstart"].forEach((eventName) => {
-      window.removeEventListener(eventName, state._unlockHandler);
-    });
-    autoplayUnlockAttached = false;
-    state._unlockHandler = null;
+    await ensureAudioContext();
+    await audio.play();
+    state.started = true;
+    autoplayPill.textContent = "запуск: эфир активен";
+    hintText.textContent = "Эфир идёт бесконечно. Треки скрыты намеренно — как и положено немного подозрительному радио.";
+    document.body.classList.add("is-playing");
   }
 
   function computeAudioLevel() {
@@ -217,7 +185,6 @@
     }
 
     analyser.getByteFrequencyData(freqData);
-    analyser.getByteTimeDomainData(timeData);
 
     let sum = 0;
     for (let i = 0; i < freqData.length; i++) {
@@ -311,16 +278,54 @@
     trackTitle.textContent = "Ошибка эфира";
     trackSubtitle.textContent = message;
     modePill.textContent = "режим: OFFLINE";
-    autoplayPill.textContent = "autoplay: недоступен";
+    autoplayPill.textContent = "запуск: недоступен";
     hintText.textContent = "Проверь manifest.json и наличие аудиофайлов в папках music и interruptions.";
+    if (startButton) {
+      startButton.disabled = false;
+      startButton.classList.remove("is-loading");
+      startButton.textContent = "повторить запуск";
+    }
+    if (startOverlay) {
+      startOverlay.classList.remove("hidden");
+    }
+    state.loading = false;
+  }
+
+  async function bootRadio() {
+    if (state.loading || state.started) return;
+    state.loading = true;
+
+    startButton.disabled = true;
+    startButton.classList.add("is-loading");
+    startButton.textContent = "загрузка эфира...";
+    autoplayPill.textContent = "запуск: загрузка файлов";
+    hintText.textContent = "Поднимаем радиовышку, стягиваем туман, будим эфир.";
+
+    try {
+      updateVolumeUi();
+      if (!state.hasBooted) {
+        await loadAllManifests();
+        state.hasBooted = true;
+      }
+      await playNext();
+      startOverlay.classList.add("hidden");
+    } catch (error) {
+      showFatalError(error?.message || "Не удалось запустить эфир.");
+    } finally {
+      state.loading = false;
+      if (!state.started) {
+        startButton.disabled = false;
+        startButton.classList.remove("is-loading");
+      }
+    }
   }
 
   audio.addEventListener("ended", () => {
-    playNext().catch(() => {});
+    playNext().catch((error) => showFatalError(error?.message || "Не удалось продолжить эфир."));
   });
 
   audio.addEventListener("error", () => {
-    playNext().catch(() => {});
+    playNext().catch((error) => showFatalError(error?.message || "Не удалось продолжить эфир."));
   });
 
   audio.addEventListener("play", () => {
@@ -332,20 +337,11 @@
     document.body.classList.remove("is-playing");
   });
 
+  volumeSlider.addEventListener("input", updateVolumeUi);
+  startButton.addEventListener("click", bootRadio);
+
   window.addEventListener("resize", resizeCanvas);
   resizeCanvas();
+  updateVolumeUi();
   animationFrame = requestAnimationFrame(animate);
-
-  (async () => {
-    try {
-      await loadAllManifests();
-      await playNext();
-    } catch (error) {
-      if (!state.audioReady) {
-        showFatalError(error?.message || "Не удалось загрузить аудиоманифесты.");
-      } else {
-        attachUnlockHandlers();
-      }
-    }
-  })();
 })();

@@ -17,6 +17,17 @@
   <div class="vignette" aria-hidden="true"></div>
   <div class="scanlines" aria-hidden="true"></div>
 
+  <div class="start-overlay" id="startOverlay" role="dialog" aria-modal="true" aria-labelledby="startTitle">
+    <div class="start-card">
+      <div class="start-kicker">gladoon frequency</div>
+      <h2 id="startTitle">Послушать радио</h2>
+      <p class="start-text">
+        Нажми, чтобы войти в эфир. После этого сайт загрузит плейлист и запустит трансляцию.
+      </p>
+      <button class="start-button" id="startButton" type="button">войти в эфир</button>
+    </div>
+  </div>
+
   <main class="app">
     <header class="radio-shell">
       <div class="brand-wrap">
@@ -29,8 +40,8 @@
 
       <div class="status-row">
         <div class="pill"><span class="dot live"></span> эфир</div>
-        <div class="pill" id="modePill">режим: MUSIC</div>
-        <div class="pill" id="autoplayPill">autoplay: попытка запуска...</div>
+        <div class="pill" id="modePill">режим: STANDBY</div>
+        <div class="pill" id="autoplayPill">запуск: ожидание входа</div>
       </div>
     </header>
 
@@ -43,9 +54,9 @@
       </div>
 
       <div class="track-card">
-        <div class="track-label">сейчас играет</div>
-        <div class="track-title" id="trackTitle">Загрузка эфира...</div>
-        <div class="track-subtitle" id="trackSubtitle">подготовка плейлиста</div>
+        <div class="track-label">радио gladoon</div>
+        <div class="track-title" id="trackTitle">Ожидание входа в эфир</div>
+        <div class="track-subtitle" id="trackSubtitle">нажми «войти в эфир», чтобы начать трансляцию</div>
       </div>
     </section>
 
@@ -55,13 +66,21 @@
         <div class="meter"><span id="meterBar"></span></div>
       </div>
 
+      <div class="control-block">
+        <label class="volume-wrap" for="volumeSlider">
+          <span class="volume-label">громкость</span>
+          <input id="volumeSlider" type="range" min="0" max="100" step="1" value="72" />
+          <span class="volume-value" id="volumeValue">72%</span>
+        </label>
+      </div>
+
       <div class="hint" id="hintText">
-        Сайт сам попробует запустить аудио. Если браузер упрётся, просто кликни в любое место страницы один раз.
+        Радио начнёт загружать эфир только после входа. Без лишних кнопок паузы и без показа названий файлов.
       </div>
     </section>
   </main>
 
-  <audio id="radioPlayer" preload="auto" playsinline></audio>
+  <audio id="radioPlayer" preload="none" playsinline></audio>
   <script src="script.js"></script>
 </body>
 </html>
