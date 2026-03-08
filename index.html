@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#090912" />
+  <title>Radio Gladoon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <canvas id="fogCanvas" aria-hidden="true"></canvas>
+
+  <div class="noise" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <main class="app">
+    <header class="radio-shell">
+      <div class="brand-wrap">
+        <div class="brand-mark"></div>
+        <div>
+          <div class="eyebrow">Endless broadcast protocol</div>
+          <h1>RADIO GLADOON</h1>
+        </div>
+      </div>
+
+      <div class="status-row">
+        <div class="pill"><span class="dot live"></span> эфир</div>
+        <div class="pill" id="modePill">режим: MUSIC</div>
+        <div class="pill" id="autoplayPill">autoplay: попытка запуска...</div>
+      </div>
+    </header>
+
+    <section class="centerpiece">
+      <div class="halo halo-a"></div>
+      <div class="halo halo-b"></div>
+      <div class="core" id="corePulse">
+        <div class="core-ring"></div>
+        <div class="core-inner"></div>
+      </div>
+
+      <div class="track-card">
+        <div class="track-label">сейчас играет</div>
+        <div class="track-title" id="trackTitle">Загрузка эфира...</div>
+        <div class="track-subtitle" id="trackSubtitle">подготовка плейлиста</div>
+      </div>
+    </section>
+
+    <section class="footer-panel">
+      <div class="meter-block">
+        <div class="meter-label">signal</div>
+        <div class="meter"><span id="meterBar"></span></div>
+      </div>
+
+      <div class="hint" id="hintText">
+        Сайт сам попробует запустить аудио. Если браузер упрётся, просто кликни в любое место страницы один раз.
+      </div>
+    </section>
+  </main>
+
+  <audio id="radioPlayer" preload="auto" playsinline></audio>
+  <script src="script.js"></script>
+</body>
+</html>
