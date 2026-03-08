@@ -172,7 +172,7 @@
     await audio.play();
     state.started = true;
     autoplayPill.textContent = "запуск: эфир активен";
-    hintText.textContent = "Эфир идёт бесконечно. Треки скрыты намеренно — как и положено немного подозрительному радио.";
+    hintText.textContent = "Наш радиоведущий работает круглосуточно, поэтому в часы эфира шоколадница остается без охранника».";
     document.body.classList.add("is-playing");
   }
 
