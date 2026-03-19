@@ -20,7 +20,8 @@
 
   const state = {
     cycleIndex: 0,
-    lastPlayed: { music: null, interruptions: null },
+    // Очереди для каждой категории
+    queues: { music: [], interruptions: [] }, 
     manifests: { music: [], interruptions: [] },
     started: false,
     loading: false,
@@ -33,6 +34,69 @@
     bassPulse: 0,
     hasBooted: false,
   };
+
+  // Фишер-Йетс для честного перемешивания
+  function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+
+  function getNextFromQueue(group) {
+    // Если очередь пуста, копируем манифест и перемешиваем
+    if (state.queues[group].length === 0) {
+      state.queues[group] = shuffleArray([...state.manifests[group]]);
+      
+      // Защита от того, чтобы первый трек новой очереди 
+      // не совпал с последним треком предыдущей
+      if (state.queues[group][0] === state.currentTrackPath && state.queues[group].length > 1) {
+        state.queues[group].push(state.queues[group].shift());
+      }
+    }
+    // Забираем первый элемент из очереди
+    return state.queues[group].shift();
+  }
+
+  async function loadAllManifests() {
+    const [music, interruptions] = await Promise.all([
+      loadManifest("music/manifest.json"),
+      loadManifest("interruptions/manifest.json")
+    ]);
+
+    if (!music.length || !interruptions.length) {
+      throw new Error("Манифесты пусты или содержат неподдерживаемые файлы.");
+    }
+
+    state.manifests.music = music;
+    state.manifests.interruptions = interruptions;
+    
+    // Инициализируем очереди сразу после загрузки
+    state.queues.music = shuffleArray([...music]);
+    state.queues.interruptions = shuffleArray([...interruptions]);
+    
+    state.audioReady = true;
+  }
+
+  async function playNext() {
+    if (!state.audioReady) return;
+
+    const group = state.cycleIndex % 2 === 0 ? "music" : "interruptions";
+    state.cycleIndex += 1;
+
+    const path = getNextFromQueue(group);
+    updateUiForTrack(group, path);
+
+    audio.src = path;
+    audio.preload = "auto";
+
+    await ensureAudioContext();
+    await audio.play();
+    state.started = true;
+    autoplayPill.textContent = "запуск: эфир активен";
+    document.body.classList.add("is-playing");
+  }
 
   let audioContext = null;
   let analyser = null;
