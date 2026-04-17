@@ -604,3 +604,13 @@ input[type="range"]::-webkit-slider-thumb {
     text-align: center;
   }
 }
+.start-button:disabled {
+  background: #333 !important;
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+.start-overlay:not(.hidden) {
+  display: flex !important; /* Гарантируем видимость при ошибке */
+}
