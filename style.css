@@ -1,4 +1,3 @@
-
 /* =============================================
    RADIO GLADOON - MAIN STYLESHEET
    Кольца Сатурна с микроточками в ритме музыки
@@ -27,6 +26,7 @@ body {
 
 /* --- туман, шум, виньетка (поверх canvas, но под контентом) --- */
 #fogCanvas {
+  pointer-events: none;
   position: fixed;
   top: 0;
   left: 0;
@@ -38,6 +38,7 @@ body {
 }
 
 .noise {
+  pointer-events: none;
   position: fixed;
   top: 0;
   left: 0;
@@ -51,6 +52,7 @@ body {
 }
 
 .vignette {
+  pointer-events: none;
   position: fixed;
   top: 0;
   left: 0;
@@ -62,6 +64,7 @@ body {
 }
 
 .scanlines {
+  pointer-events: none;
   position: fixed;
   top: 0;
   left: 0;
@@ -98,6 +101,8 @@ body {
   justify-content: center;
   transition: opacity 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1), visibility 0.5s;
   font-family: 'Inter', monospace;
+  pointer-events: auto;
+  z-index: 9999; 
 }
 
 .start-overlay.hidden {
